@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Event;
 use App\Models\User;
+use App\Services\GeocodingService;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -27,6 +28,7 @@ class EventFactory extends Factory
             'created_time' => $startsAt,
             'latitude' => $lat,
             'longitude' => $lng,
+            'location_label' => app(GeocodingService::class)->labelFor($lat, $lng),
             'payload' => [
                 'name' => ucwords(fake()->words(3, true)),
                 'category' => $type,

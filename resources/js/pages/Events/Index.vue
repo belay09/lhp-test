@@ -1,25 +1,27 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
+import EventFilters from '@/components/events/EventFilters.vue';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { formatEventSchedule, type EventScheduleSource } from '@/lib/formatEventDate';
 
-interface EventRow {
+interface EventRow extends EventScheduleSource {
     id: string;
     type: string;
     status: string;
-    created_time: number | null;
     user: { id: number; name: string } | null;
 }
 
 const props = defineProps<{
-    filters: { status: string | null; from: string };
+    filters: { status: string | null; from: string; to?: string | null; location?: string | null };
     statuses: string[];
 }>();
 
 const form = reactive({
     status: props.filters.status ?? '',
     from: props.filters.from ?? '',
+    to: props.filters.to ?? '',
+    location: props.filters.location ?? '',
 });
 
 const rows = ref<EventRow[]>([]);
@@ -52,6 +54,8 @@ async function loadMore() {
     const params = new URLSearchParams({ page: String(page.value + 1) });
     if (form.status) params.set('status', form.status);
     if (form.from) params.set('from', form.from);
+    if (form.to) params.set('to', form.to);
+    if (form.location) params.set('location', form.location);
 
     try {
         const response = await fetch(`/events/data?${params.toString()}`, {
@@ -124,29 +128,7 @@ onBeforeUnmount(() => observer?.disconnect());
             </p>
         </div>
 
-        <form class="flex flex-wrap items-end gap-3" @submit.prevent>
-            <div class="flex flex-col gap-1">
-                <label class="text-xs text-muted-foreground" for="status">Status</label>
-                <select
-                    id="status"
-                    v-model="form.status"
-                    class="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                >
-                    <option value="">All</option>
-                    <option v-for="s in statuses" :key="s" :value="s">{{ s }}</option>
-                </select>
-            </div>
-            <div class="flex flex-col gap-1">
-                <label class="text-xs text-muted-foreground" for="from">From</label>
-                <input
-                    id="from"
-                    v-model="form.from"
-                    type="date"
-                    class="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                />
-            </div>
-            <Button type="button" @click.prevent="aplyFilters">Filter</Button>
-        </form>
+        <EventFilters v-model="form" :statuses="statuses" @apply="applyFilters" />
 
         <div class="overflow-x-auto rounded-lg border">
             <table class="w-full text-sm">
@@ -168,7 +150,7 @@ onBeforeUnmount(() => observer?.disconnect());
                             <Badge :variant="statusVariant(event.status)">{{ event.status }}</Badge>
                         </td>
                         <td class="px-3 py-2">{{ event.user?.name ?? '—' }}</td>
-                        <td class="px-3 py-2 font-mono text-xs">{{ event.created_time }}</td>
+                        <td class="px-3 py-2 whitespace-nowrap">{{ formatEventSchedule(event) }}</td>
                         <td class="px-3 py-2 text-right">
                             <Link :href="`/events/${event.id}`" class="text-primary hover:underline">View</Link>
                         </td>
