@@ -176,6 +176,8 @@ it('shows an event detail page with its payload', function () {
             ->where('event.id', $event->id)
             ->where('event.payload.name', 'Global Tech Summit')
             ->where('event.location_label', 'London, UK')
+            ->has('attendees.data', 0)
+            ->where('attendees.total', 0)
         );
 });
 

@@ -41,6 +41,7 @@ function monthKey(unixSeconds: number): string {
     const date = new Date(unixSeconds * 1000);
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
+
     return `${year}-${month}`;
 }
 
@@ -73,13 +74,26 @@ async function loadMore() {
     if (loading.value || !hasMore.value) {
         return;
     }
+
     loading.value = true;
 
     const params = new URLSearchParams({ page: String(page.value + 1) });
-    if (form.status) params.set('status', form.status);
-    if (form.from) params.set('from', form.from);
-    if (form.to) params.set('to', form.to);
-    if (form.location) params.set('location', form.location);
+
+    if (form.status) {
+params.set('status', form.status);
+}
+
+    if (form.from) {
+params.set('from', form.from);
+}
+
+    if (form.to) {
+params.set('to', form.to);
+}
+
+    if (form.location) {
+params.set('location', form.location);
+}
 
     try {
         const response = await fetch(`/events/data?${params.toString()}`, {
@@ -115,9 +129,11 @@ onMounted(() => {
         },
         { rootMargin: '400px' },
     );
+
     if (sentinel.value) {
         observer.observe(sentinel.value);
     }
+
     loadMore();
 });
 

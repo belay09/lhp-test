@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import type { EventCardData } from '@/components/events/EventCard.vue';
 import { formatEventSchedule } from '@/lib/formatEventDate';
 
@@ -11,11 +11,13 @@ const props = defineProps<{
 
 const title = computed(() => {
     const name = props.event.payload?.name;
+
     return typeof name === 'string' ? name : props.event.type;
 });
 
 const description = computed(() => {
     const text = props.event.payload?.description;
+
     return typeof text === 'string' ? text : '';
 });
 

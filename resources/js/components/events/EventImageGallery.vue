@@ -25,9 +25,11 @@ const hasMultiple = computed(() => props.images.length > 1);
 
 const currentImage = computed(() => {
     const url = props.images[currentIndex.value]?.url ?? null;
+
     if (url && failedUrls.value.has(url)) {
         return null;
     }
+
     return url;
 });
 
@@ -76,11 +78,13 @@ const dotsContainerClass = computed(() =>
 
 function dotClass(index: number) {
     const isActive = index === currentIndex.value;
+
     if (props.variant === 'hero') {
         return isActive
             ? 'h-2.5 w-6 rounded-full bg-white shadow-md'
             : 'size-2.5 rounded-full bg-white/40 hover:bg-white/60';
     }
+
     return isActive
         ? 'size-2 rounded-full bg-white shadow-sm ring-1 ring-white/30'
         : 'size-2 rounded-full bg-white/55 ring-1 ring-black/15 hover:bg-white/80';
@@ -98,6 +102,7 @@ function showPrevious() {
     if (props.images.length === 0) {
         return;
     }
+
     currentIndex.value = (currentIndex.value - 1 + props.images.length) % props.images.length;
 }
 
@@ -105,6 +110,7 @@ function showNext() {
     if (props.images.length === 0) {
         return;
     }
+
     currentIndex.value = (currentIndex.value + 1) % props.images.length;
 }
 

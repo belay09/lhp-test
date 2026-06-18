@@ -60,13 +60,19 @@ class EventController extends Controller
     {
         $event->load(['user', 'images']);
 
+        $attendees = $event->attendees()
+            ->orderBy('created_at')
+            ->paginate(15)
+            ->withQueryString();
+
         return Inertia::render('Events/Show', [
             'event' => $event,
+            'attendees' => $attendees,
         ]);
     }
 
     /**
-     * @return array{0: LengthAwarePaginator, 1: array{ms: int, bytes: int}}
+     * @return array{0: LengthAwarePaginator<int, Event>, 1: array{ms: int, bytes: int}}
      */
     private function loadListing(Request $request): array
     {

@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
-import EventCard, { type EventCardData } from '@/components/events/EventCard.vue';
+import EventCard from '@/components/events/EventCard.vue';
+import type {EventCardData} from '@/components/events/EventCard.vue';
 import EventFilters from '@/components/events/EventFilters.vue';
 
 const props = defineProps<{
@@ -32,13 +33,26 @@ async function loadMore() {
     if (loading.value || !hasMore.value) {
         return;
     }
+
     loading.value = true;
 
     const params = new URLSearchParams({ page: String(page.value + 1) });
-    if (form.status) params.set('status', form.status);
-    if (form.from) params.set('from', form.from);
-    if (form.to) params.set('to', form.to);
-    if (form.location) params.set('location', form.location);
+
+    if (form.status) {
+params.set('status', form.status);
+}
+
+    if (form.from) {
+params.set('from', form.from);
+}
+
+    if (form.to) {
+params.set('to', form.to);
+}
+
+    if (form.location) {
+params.set('location', form.location);
+}
 
     try {
         const response = await fetch(`/events/data?${params.toString()}`, {
@@ -74,9 +88,11 @@ onMounted(() => {
         },
         { rootMargin: '400px' },
     );
+
     if (sentinel.value) {
         observer.observe(sentinel.value);
     }
+
     loadMore();
 });
 

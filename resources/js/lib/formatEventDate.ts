@@ -44,6 +44,7 @@ export function formatEventDate(unixSeconds: number, options?: FormatEventDateOp
     }
 
     const hint = formatRelativeHint(unixSeconds);
+
     return hint ? `${formatted} (${hint})` : formatted;
 }
 
@@ -80,6 +81,7 @@ export function formatEventDateRange(
         }
 
         const hint = formatRelativeHint(startUnix);
+
         return hint ? `${range} (${hint})` : range;
     }
 
@@ -101,11 +103,13 @@ function formatRelativeHint(unixSeconds: number): string | null {
     }
 
     const diffHours = Math.round(diffMs / (1000 * 60 * 60));
+
     if (Math.abs(diffHours) >= 1) {
         return rtf.format(diffHours, 'hour');
     }
 
     const diffMinutes = Math.round(diffMs / (1000 * 60));
+
     return rtf.format(diffMinutes, 'minute');
 }
 

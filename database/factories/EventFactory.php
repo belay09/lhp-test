@@ -21,6 +21,8 @@ class EventFactory extends Factory
         $lng = fake()->longitude();
         $startsAt = fake()->numberBetween(strtotime('-1 year'), strtotime('+1 year'));
 
+        $words = fake()->words(3);
+
         return [
             'user_id' => User::factory(),
             'type' => $type,
@@ -30,7 +32,7 @@ class EventFactory extends Factory
             'longitude' => $lng,
             'location_label' => app(GeocodingService::class)->labelFor($lat, $lng),
             'payload' => [
-                'name' => ucwords(fake()->words(3, true)),
+                'name' => ucwords(is_array($words) ? implode(' ', $words) : $words),
                 'category' => $type,
                 'venue' => ['name' => fake()->company(), 'capacity' => fake()->numberBetween(20, 50000)],
                 'location' => ['lat' => $lat, 'lng' => $lng],

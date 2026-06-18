@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import EventImageGallery from '@/components/events/EventImageGallery.vue';
+import type {EventImageItem} from '@/components/events/EventImageGallery.vue';
 import { Badge } from '@/components/ui/badge';
-import EventImageGallery, { type EventImageItem } from '@/components/events/EventImageGallery.vue';
-import { formatEventSchedule, type EventScheduleSource } from '@/lib/formatEventDate';
+import { formatEventSchedule  } from '@/lib/formatEventDate';
+import type {EventScheduleSource} from '@/lib/formatEventDate';
 
 export interface EventCardData extends EventScheduleSource {
     id: string;
@@ -21,11 +23,13 @@ const props = defineProps<{
 
 const title = computed(() => {
     const name = props.event.payload?.name;
+
     return typeof name === 'string' ? name : props.event.type;
 });
 
 const description = computed(() => {
     const text = props.event.payload?.description;
+
     return typeof text === 'string' ? text : '';
 });
 

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Head, Link } from '@inertiajs/vue3';
 import {
     Building2,
     CalendarDays,
@@ -7,15 +8,33 @@ import {
     MapPin,
     Ticket,
     UserRound,
+    Users,
 } from '@lucide/vue';
-import { Head, Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
-import EventImageGallery, { type EventImageItem } from '@/components/events/EventImageGallery.vue';
+import AttendeeForm from '@/components/events/AttendeeForm.vue';
+import EventImageGallery from '@/components/events/EventImageGallery.vue';
+import type {EventImageItem} from '@/components/events/EventImageGallery.vue';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { formatEventSchedule, type EventScheduleSource } from '@/lib/formatEventDate';
+import { formatEventSchedule  } from '@/lib/formatEventDate';
+import type {EventScheduleSource} from '@/lib/formatEventDate';
 import { cn } from '@/lib/utils';
+
+interface EventAttendeeItem {
+    id: number;
+    name: string;
+    email: string;
+    created_at: string;
+}
+
+interface AttendeesPaginator {
+    data: EventAttendeeItem[];
+    current_page: number;
+    last_page: number;
+    total: number;
+    links: Array<{ url: string | null; label: string; active: boolean }>;
+}
 
 interface EventDetail extends EventScheduleSource {
     id: string;
@@ -28,22 +47,28 @@ interface EventDetail extends EventScheduleSource {
     images?: EventImageItem[];
 }
 
-const props = defineProps<{ event: EventDetail }>();
+const props = defineProps<{
+    event: EventDetail;
+    attendees: AttendeesPaginator;
+}>();
 
 const prettyPayload = computed(() => JSON.stringify(props.event.payload, null, 2));
 
 const eventName = computed(() => {
     const name = props.event.payload.name;
+
     return typeof name === 'string' ? name : props.event.type;
 });
 
 const description = computed(() => {
     const text = props.event.payload.description;
+
     return typeof text === 'string' ? text : '';
 });
 
 const category = computed(() => {
     const cat = props.event.payload.category;
+
     return typeof cat === 'string' ? cat : props.event.type;
 });
 
@@ -66,17 +91,21 @@ const statusBadgeClass = computed(() => {
 
 const organizerName = computed(() => {
     const organizer = props.event.payload.organizer;
+
     if (organizer && typeof organizer === 'object') {
         const name = (organizer as { name?: unknown }).name;
+
         if (typeof name === 'string') {
             return name;
         }
     }
+
     return null;
 });
 
 const venueDisplay = computed(() => {
     const venue = props.event.payload.venue;
+
     if (!venue || typeof venue !== 'object') {
         return null;
     }
@@ -89,6 +118,7 @@ const venueDisplay = computed(() => {
     }
 
     const cap = Number(capacity);
+
     if (!Number.isNaN(cap) && capacity !== '' && capacity != null) {
         parts.push(`Capacity ${cap.toLocaleString()}`);
     }
@@ -98,6 +128,7 @@ const venueDisplay = computed(() => {
 
 const pricingDisplay = computed(() => {
     const pricing = props.event.payload.pricing;
+
     if (!pricing || typeof pricing !== 'object') {
         return null;
     }
@@ -108,6 +139,7 @@ const pricingDisplay = computed(() => {
     };
 
     const price = Number(minPrice);
+
     if (Number.isNaN(price)) {
         return null;
     }
@@ -123,6 +155,7 @@ const pricingDisplay = computed(() => {
 
 const tags = computed(() => {
     const raw = props.event.payload.tags;
+
     if (!Array.isArray(raw)) {
         return [];
     }
@@ -166,9 +199,23 @@ const sidebarItems = computed((): SidebarItem[] => {
     return items;
 });
 
-const canRegister = computed(
-    () => props.event.status === 'published' && pricingDisplay.value !== null,
-);
+const canRegister = computed(() => props.event.status === 'published');
+
+const registrationDisabledMessage = computed(() => {
+    if (props.event.status === 'sold_out') {
+        return 'This event is sold out. Registration is no longer available.';
+    }
+
+    if (props.event.status === 'cancelled') {
+        return 'This event has been cancelled. Registration is closed.';
+    }
+
+    if (props.event.status !== 'published') {
+        return 'Registration is not open for this event yet.';
+    }
+
+    return '';
+});
 </script>
 
 <template>
@@ -255,6 +302,52 @@ const canRegister = computed(
                 >
                     No additional details for this event.
                 </section>
+
+                <section v-if="attendees.total > 0" class="space-y-4">
+                    <div class="flex items-center gap-2">
+                        <Users class="size-5 text-muted-foreground" aria-hidden="true" />
+                        <h2 class="text-lg font-semibold tracking-tight">
+                            Attendees
+                            <span class="text-base font-normal text-muted-foreground">
+                                ({{ attendees.total }})
+                            </span>
+                        </h2>
+                    </div>
+
+                    <ul class="divide-y divide-border/60 rounded-xl border border-border/60 bg-card/40">
+                        <li
+                            v-for="attendee in attendees.data"
+                            :key="attendee.id"
+                            class="flex items-center justify-between gap-3 px-4 py-3 text-sm"
+                        >
+                            <span class="font-medium">{{ attendee.name }}</span>
+                            <span class="truncate text-muted-foreground">{{ attendee.email }}</span>
+                        </li>
+                    </ul>
+
+                    <nav
+                        v-if="attendees.last_page > 1"
+                        class="flex flex-wrap gap-2"
+                        aria-label="Attendee pagination"
+                    >
+                        <Link
+                            v-for="link in attendees.links"
+                            :key="link.label"
+                            :href="link.url ?? undefined"
+                            preserve-scroll
+                            class="rounded-md px-3 py-1.5 text-sm transition-colors"
+                            :class="
+                                link.active
+                                    ? 'bg-primary text-primary-foreground'
+                                    : link.url
+                                      ? 'bg-muted/50 text-foreground hover:bg-muted'
+                                      : 'pointer-events-none text-muted-foreground/50'
+                            "
+                        >
+                            <span v-html="link.label" />
+                        </Link>
+                    </nav>
+                </section>
             </div>
 
             <aside class="lg:col-span-1">
@@ -286,25 +379,12 @@ const canRegister = computed(
 
                         <Separator class="my-2" />
 
-                        <div class="space-y-3 rounded-lg border border-dashed border-border/70 bg-muted/20 p-4">
-                            <p class="text-sm font-medium">Attendee registration</p>
-                            <p class="text-xs leading-relaxed text-muted-foreground">
-                                Registration will be available here in a future update.
-                            </p>
-                            <button
-                                type="button"
-                                disabled
-                                class="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground opacity-50"
-                                :class="{ 'cursor-not-allowed': !canRegister }"
-                            >
-                                {{
-                                    event.status === 'sold_out'
-                                        ? 'Sold out'
-                                        : event.status === 'cancelled'
-                                          ? 'Event cancelled'
-                                          : 'Register — coming soon'
-                                }}
-                            </button>
+                        <div class="rounded-lg border border-dashed border-border/70 bg-muted/20 p-4">
+                            <AttendeeForm
+                                :event-id="event.id"
+                                :disabled="!canRegister"
+                                :disabled-message="registrationDisabledMessage"
+                            />
                         </div>
                     </CardContent>
                 </Card>
